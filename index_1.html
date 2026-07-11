@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오늘 밥 뭐 먹지?</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #fff1e6 0%, #ffe0ec 100%);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    padding: 24px;
+  }
+  .card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 36px 28px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+    text-align: center;
+    position: relative;
+  }
+  h1 {
+    font-size: 22px;
+    margin: 0 0 6px;
+    color: #333;
+  }
+  .sub {
+    font-size: 14px;
+    color: #888;
+    margin: 0 0 24px;
+  }
+  .menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .menu-btn {
+    border: none;
+    border-radius: 18px;
+    padding: 18px 8px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .menu-btn .emoji {
+    font-size: 34px;
+    line-height: 1;
+  }
+  .menu-btn:hover {
+    transform: scale(1.05);
+  }
+  .menu-btn:active {
+    transform: scale(0.96);
+  }
+  .menu-btn.c-red { background: #ffe1de; color: #c23b2e; }
+  .menu-btn.c-yellow { background: #fff2cf; color: #a5720a; }
+  .menu-btn.c-orange { background: #ffe4cc; color: #c1631a; }
+  .menu-btn.c-pink { background: #ffe0ec; color: #c23a6b; }
+  .menu-btn.c-green { background: #e3f3da; color: #4a7a2c; }
+  .menu-btn.c-brown { background: #f0e2d2; color: #8a5a2b; }
+  .dodge-wrap {
+    position: relative;
+    height: 60px;
+    margin-bottom: 10px;
+  }
+  .dodge-btn {
+    position: absolute;
+    border: none;
+    background: #f1f1f1;
+    color: #999;
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: left 0.12s ease, top 0.12s ease;
+  }
+  #resultBox, #likeView, #pickerView, #timeView, #mealTypeView {
+    display: none;
+  }
+  .meal-type-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .meal-type-btn {
+    border: 2px solid #ffd9c4;
+    background: #fff8f3;
+    border-radius: 16px;
+    padding: 20px 8px;
+    font-size: 17px;
+    font-weight: 600;
+    color: #d8683a;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+  .meal-type-btn:hover {
+    background: #ffe9db;
+    transform: scale(1.03);
+  }
+  .meal-type-btn:active {
+    transform: scale(0.96);
+  }
+  #resultBox p {
+    margin: 4px 0;
+    font-size: 16px;
+    color: #d8437a;
+    font-weight: 600;
+  }
+  #resultBox span.small {
+    font-size: 13px;
+    color: #999;
+    font-weight: 400;
+  }
+  .hearts {
+    font-size: 28px;
+    margin-top: 6px;
+  }
+  .like-row {
+    position: relative;
+    height: 140px;
+    margin-top: 10px;
+  }
+  #likeYes {
+    position: absolute;
+    left: 50%;
+    top: 20px;
+    transform: translateX(calc(-100% - 8px)) scale(1);
+    border: none;
+    background: #ff8fab;
+    color: #fff;
+    border-radius: 999px;
+    padding: 14px 28px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .time-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 16px 0;
+  }
+  .time-row select {
+    font-size: 20px;
+    padding: 10px 8px;
+    border: 2px solid #ffd9c4;
+    border-radius: 12px;
+    background: #fff8f3;
+    color: #d8683a;
+    font-weight: 600;
+  }
+  .time-row span {
+    font-size: 20px;
+    color: #d8683a;
+    font-weight: 600;
+  }
+  #timeConfirm {
+    display: block;
+    margin: 8px auto 0;
+    border: none;
+    background: #ff8fab;
+    color: #fff;
+    border-radius: 999px;
+    padding: 12px 26px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <div id="likeView" style="display:block;">
+    <h1>오늘 같이 밥 먹을래? 🍽️</h1>
+    <p class="sub">골라줘 ㅎㅎ</p>
+    <div class="like-row">
+      <button id="likeYes">좋아 😊</button>
+      <button class="dodge-btn" id="likeNo">싫어 😐</button>
+    </div>
+  </div>
+
+  <div id="mealTypeView">
+    <h1>점심 먹을까 저녁 먹을까? 🍽️</h1>
+    <p class="sub">골라줘</p>
+    <div class="meal-type-grid">
+      <button class="meal-type-btn" data-meal="점심" data-default-hour="12">🌞 점심</button>
+      <button class="meal-type-btn" data-meal="저녁" data-default-hour="19">🌙 저녁</button>
+    </div>
+  </div>
+
+  <div id="pickerView">
+    <h1 id="pickerTitle">그럼 뭐 먹을까? 🍽️</h1>
+    <p class="sub" id="pickerSub">골라주면 데리러 갈게 ㅎㅎ</p>
+
+    <div class="menu-grid">
+      <button class="menu-btn c-red" data-menu="마라탕"><span class="emoji">🌶️</span>마라탕</button>
+      <button class="menu-btn c-yellow" data-menu="돈까스"><span class="emoji">🍖</span>돈까스</button>
+      <button class="menu-btn c-orange" data-menu="중국집"><span class="emoji">🥡</span>중국집</button>
+      <button class="menu-btn c-pink" data-menu="샤브샤브"><span class="emoji">🥘</span>샤브샤브</button>
+      <button class="menu-btn c-green" data-menu="분식집"><span class="emoji">🍢🍥</span>분식집</button>
+      <button class="menu-btn c-brown" data-menu="국밥집"><span class="emoji">🍲</span>국밥집</button>
+    </div>
+
+    <div id="customMenuArea" style="margin-top:4px;">
+      <button id="customToggleBtn" style="border:none; background:#f1f1f1; color:#999; border-radius:999px; padding:10px 18px; font-size:13px; cursor:pointer;">목록에 없으면 먹고싶은거 입력</button>
+      <div id="customInputRow" style="display:none; margin-top:10px; display:flex; gap:8px; justify-content:center;">
+        <input type="text" id="customMenuInput" placeholder="예: 마라샹궈" style="font-size:15px; padding:10px 12px; border:2px solid #ffd9c4; border-radius:12px; flex:1; max-width:180px;">
+        <button id="customConfirmBtn" style="border:none; background:#ff8fab; color:#fff; border-radius:12px; padding:10px 16px; font-size:14px; font-weight:600; cursor:pointer;">확정</button>
+      </div>
+      <p id="customError" style="display:none; color:#c0392b; font-size:12px; margin-top:8px;"></p>
+    </div>
+  </div>
+
+  <div id="timeView">
+    <h1 id="timeTitle">오늘 몇 시에 먹을까? ⏰</h1>
+    <p class="sub" id="timeSub"></p>
+    <div class="time-row">
+      <select id="hourSelect"></select>
+      <span>시</span>
+      <select id="minuteSelect"></select>
+      <span>분</span>
+    </div>
+    <button id="timeConfirm">이 시간으로 갈게!</button>
+  </div>
+
+  <div id="resultBox">
+    <div class="hearts" id="resultEmoji">🥰</div>
+    <p id="resultText"></p>
+    <p id="resultTime" class="small"></p>
+    <p class="small">고마워, 그 시간에 갈게!</p>
+  </div>
+
+</div>
+
+<script>
+function makeDodge(btn, wrap, options) {
+  options = options || {};
+  const avoidEl = options.avoid || null;
+  const onAttempt = options.onAttempt || null;
+  let touched = false;
+  let attempts = 0;
+  let lastCountTime = 0;
+  const margin = 8;
+  const avoidPad = 18;
+
+  function countAttempt() {
+    const now = Date.now();
+    if (now - lastCountTime > 150) {
+      attempts++;
+      lastCountTime = now;
+      if (onAttempt) onAttempt(attempts);
+    }
+  }
+
+  function getAvoidRect() {
+    if (!avoidEl) return null;
+    const wrapRect = wrap.getBoundingClientRect();
+    const elRect = avoidEl.getBoundingClientRect();
+    return {
+      left: elRect.left - wrapRect.left - avoidPad,
+      top: elRect.top - wrapRect.top - avoidPad,
+      right: elRect.left - wrapRect.left + elRect.width + avoidPad,
+      bottom: elRect.top - wrapRect.top + elRect.height + avoidPad
+    };
+  }
+
+  function overlapsAvoid(candLeft, candTop, btnWidth, btnHeight, avoidRect) {
+    if (!avoidRect) return false;
+    const candRight = candLeft + btnWidth;
+    const candBottom = candTop + btnHeight;
+    return !(candRight < avoidRect.left || candLeft > avoidRect.right || candBottom < avoidRect.top || candTop > avoidRect.bottom);
+  }
+
+  function randomFarPoint(fromX, fromY) {
+    const wrapRect = wrap.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    const maxLeft = Math.max(wrapRect.width - btnRect.width - margin, margin);
+    const maxTop = Math.max(wrapRect.height - btnRect.height - margin, margin);
+    const avoidRect = getAvoidRect();
+
+    let best = null;
+    let bestDist = -1;
+    let bestNonOverlap = null;
+    let bestNonOverlapDist = -1;
+    for (let i = 0; i < 24; i++) {
+      const candLeft = Math.random() * maxLeft;
+      const candTop = Math.random() * maxTop;
+      const candCx = candLeft + btnRect.width / 2;
+      const candCy = candTop + btnRect.height / 2;
+      const dx = candCx - (fromX - wrapRect.left);
+      const dy = candCy - (fromY - wrapRect.top);
+      const dist = dx * dx + dy * dy;
+      const overlaps = overlapsAvoid(candLeft, candTop, btnRect.width, btnRect.height, avoidRect);
+      if (!overlaps && dist > bestNonOverlapDist) {
+        bestNonOverlapDist = dist;
+        bestNonOverlap = { left: candLeft, top: candTop };
+      }
+      if (dist > bestDist) {
+        bestDist = dist;
+        best = { left: candLeft, top: candTop };
+      }
+    }
+    return bestNonOverlap || best;
+  }
+
+  function moveAwayFrom(clientX, clientY) {
+    countAttempt();
+    const p = randomFarPoint(clientX, clientY);
+    btn.style.left = p.left + 'px';
+    btn.style.top = p.top + 'px';
+  }
+
+  function moveRandom() {
+    countAttempt();
+    const wrapRect = wrap.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    const maxLeft = Math.max(wrapRect.width - btnRect.width - margin, margin);
+    const maxTop = Math.max(wrapRect.height - btnRect.height - margin, margin);
+    const avoidRect = getAvoidRect();
+    let left, top;
+    for (let i = 0; i < 24; i++) {
+      left = Math.random() * maxLeft;
+      top = Math.random() * maxTop;
+      if (!overlapsAvoid(left, top, btnRect.width, btnRect.height, avoidRect)) break;
+    }
+    btn.style.left = left + 'px';
+    btn.style.top = top + 'px';
+  }
+
+  function arm() {
+    if (!touched) {
+      touched = true;
+      btn.style.transform = 'none';
+    }
+  }
+
+  wrap.addEventListener('mousemove', function(e) {
+    arm();
+    const btnRect = btn.getBoundingClientRect();
+    const cx = btnRect.left + btnRect.width / 2;
+    const cy = btnRect.top + btnRect.height / 2;
+    const dx = e.clientX - cx;
+    const dy = e.clientY - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const threshold = Math.max(btnRect.width, btnRect.height) / 2 + 70;
+    if (dist < threshold) {
+      moveAwayFrom(e.clientX, e.clientY);
+    }
+  });
+
+  btn.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    arm();
+    moveRandom();
+  });
+  btn.addEventListener('click', function(e) {
+    e.preventDefault();
+    arm();
+    moveRandom();
+  });
+}
+
+const likeView = document.getElementById('likeView');
+const mealTypeView = document.getElementById('mealTypeView');
+const pickerView = document.getElementById('pickerView');
+const timeView = document.getElementById('timeView');
+const resultBox = document.getElementById('resultBox');
+const resultText = document.getElementById('resultText');
+const resultTime = document.getElementById('resultTime');
+const timeSub = document.getElementById('timeSub');
+const timeTitle = document.getElementById('timeTitle');
+const menuButtons = document.querySelectorAll('.menu-btn');
+
+let chosenMenu = null;
+let chosenMealType = '저녁';
+let defaultHour = 19;
+
+const pickerTitle = document.getElementById('pickerTitle');
+const pickerSub = document.getElementById('pickerSub');
+
+document.querySelectorAll('.meal-type-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    chosenMealType = btn.getAttribute('data-meal');
+    defaultHour = parseInt(btn.getAttribute('data-default-hour'), 10);
+    mealTypeView.style.display = 'none';
+    pickerTitle.textContent = chosenMealType + '으로 뭐 먹을까? 🍽️';
+    pickerSub.textContent = '골라주면 ' + chosenMealType + '시간에 데리러 갈게 ㅎㅎ';
+    pickerView.style.display = 'block';
+  });
+});
+
+const menuEmojis = {
+  '마라탕': '🌶️',
+  '돈까스': '🍖',
+  '중국집': '🥡',
+  '샤브샤브': '🥘',
+  '분식집': '🍢🍥',
+  '국밥집': '🍲'
+};
+
+const resultEmoji = document.getElementById('resultEmoji');
+
+const hourSelect = document.getElementById('hourSelect');
+const minuteSelect = document.getElementById('minuteSelect');
+for (let h = 0; h < 24; h++) {
+  const opt = document.createElement('option');
+  opt.value = String(h).padStart(2, '0');
+  opt.textContent = String(h).padStart(2, '0');
+  hourSelect.appendChild(opt);
+}
+for (let m = 0; m < 60; m += 5) {
+  const opt = document.createElement('option');
+  opt.value = String(m).padStart(2, '0');
+  opt.textContent = String(m).padStart(2, '0');
+  if (m === 0) opt.selected = true;
+  minuteSelect.appendChild(opt);
+}
+
+function applyDefaultHour() {
+  Array.from(hourSelect.options).forEach(function(opt) {
+    opt.selected = (parseInt(opt.value, 10) === defaultHour);
+  });
+}
+
+const likeYesBtn = document.getElementById('likeYes');
+
+function growLikeYes(attempts) {
+  const scale = Math.min(1 + attempts * 0.06, 2.6);
+  likeYesBtn.style.transform = 'translateX(calc(-100% - 8px)) scale(' + scale.toFixed(2) + ')';
+}
+
+makeDodge(document.getElementById('likeNo'), document.querySelector('.like-row'), {
+  avoid: likeYesBtn,
+  onAttempt: growLikeYes
+});
+
+document.getElementById('likeYes').addEventListener('click', function() {
+  likeView.style.display = 'none';
+  mealTypeView.style.display = 'block';
+});
+
+const NTFY_TOPIC = 'yoon-dinner-pick-2607';
+
+function notifyNtfy(mealType, menu, time) {
+  fetch('https://ntfy.sh/' + NTFY_TOPIC, {
+    method: 'POST',
+    body: mealType + '으로 ' + menu + ' 골랐어! ' + time + '에 만나자 🥰'
+  }).catch(function(err) {
+    console.error('ntfy 알림 실패', err);
+  });
+}
+
+menuButtons.forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    chosenMenu = btn.getAttribute('data-menu');
+    pickerView.style.display = 'none';
+    timeTitle.textContent = '오늘 ' + chosenMealType + ' 몇 시에 먹을까? ⏰';
+    timeSub.textContent = chosenMealType + '에 ' + chosenMenu + ' 먹을 시간 골라줘';
+    applyDefaultHour();
+    timeView.style.display = 'block';
+  });
+});
+
+const customToggleBtn = document.getElementById('customToggleBtn');
+const customInputRow = document.getElementById('customInputRow');
+const customMenuInput = document.getElementById('customMenuInput');
+const customConfirmBtn = document.getElementById('customConfirmBtn');
+const customError = document.getElementById('customError');
+
+const blockedWords = [
+  '안먹어', '안먹을래', '안먹음', '안먹을란다', '안먹을거야', '안먹을게',
+  '먹기싫어', '먹기 싫어', '먹기싫다', '먹고싶지않아', '먹고싶지 않아',
+  '굶을래', '굶을거야', '굶는다', '굶음', '굶어야지', '굶지뭐', '굶지 뭐',
+  '안먹', '노밥', '밥싫어', '밥안먹어',
+  '싫어', '싫다', '싫음', '시러', '시렁', '시룸', '별로', '별루',
+  '안돼', '안됨', '안될듯', '안될것같아',
+  '아니', '아니야', '아니요', '아뇨', '노노', '노노노',
+  '몰라', '몰루', '모름', '모르겠어', '모르겠다', '글쎄',
+  '됐어', '됐다', '됐음', '필요없어', '필요없다', '관심없어', '관심없다',
+  '패스', '스킵', '넘어가', '건너뛰',
+  '다이어트', '안먹을게요', '먹지마', '먹지말자',
+  '입맛없어', '입맛없다', '입맛이없어', '입맛이 없어', '입맛없음',
+  '생각없어', '생각없다', '생각없음',
+  '안땡겨', '안땡김', '안땡기네', '땡기지않아', '땡기지 않아',
+  '안내켜', '내키지않아', '내키지 않아', '안내킴',
+  '못먹겠어', '못먹겠다', '못먹겠음',
+  '배불러', '배불러서', '배부름',
+  '손이안가', '손안가', '손이 안가', '밥맛없어', '밥맛없다',
+  '난돼지야', '나돼지야', '돼지야', '돼지됐어', '돼지될거야',
+  '살빼야해', '살 빼야해', '살빼야돼', '살빼는중', '살빼는 중',
+  '살쪘어', '살쪄서', '살찔까봐', '살찔것같아', '살찔거같아',
+  '다이어트해야해', '다이어트 해야해', '다이어트중', '다이어트 중', '다이어트해야돼',
+  '뚱뚱해서', '뚱뚱해질까봐', '칼로리무서워', '칼로리 무서워',
+  '바빠서못먹어', '바빠서 못먹어', '바빠서안돼', '바빠서 안돼',
+  '바빠', '바쁨', '바쁘다', '바쁘고', '바쁠것같아', '바쁠 것 같아',
+  'no', 'nope', 'skip', 'pass'
+];
+
+function normalize(str) {
+  return str.replace(/\s/g, '').toLowerCase();
+}
+
+function isRefusal(rawVal) {
+  const normalized = normalize(rawVal);
+  if (!normalized) return true;
+  const hasBlockedWord = blockedWords.some(function(w) {
+    return normalized.includes(normalize(w));
+  });
+  if (hasBlockedWord) return true;
+
+  let stripped = normalized;
+  blockedWords.forEach(function(w) {
+    stripped = stripped.split(normalize(w)).join('');
+  });
+  if (stripped.length === 0) return true;
+
+  return false;
+}
+
+const refusalReplies = [
+  '안돼, 먹어야지 ㅋㅋ',
+  '먹어야 나랑 놀지~',
+  '먹어야 더 예뻐지지~',
+  '굶으면 나 삐진다?',
+  '그건 답 아니야 ㅋㅋ 메뉴 골라줘',
+  '밥 안 먹으면 나랑 못 만나 ㅠㅠ',
+  '얼레리꼴레리 그건 메뉴가 아니잖아',
+  '먹어야 오늘 하루도 힘내지',
+  '그 대답은 안 통해, 뭐 먹고싶어?',
+  '나 삐질 뻔 ㅋㅋ 진짜 먹고싶은거 말해줘',
+  '니가 좋아, 근데 메뉴는 더 좋아',
+  '넌 먹을때 제일 예뻐',
+  '먹는 모습이 제일 이쁜데 왜 굶으려고 해',
+  '나 너 먹을때 보는거 완전 좋아하는데',
+  '아니아니, 오늘도 맛있게 먹는 모습 보고싶어'
+];
+
+function pickRefusalReply() {
+  return refusalReplies[Math.floor(Math.random() * refusalReplies.length)];
+}
+
+customToggleBtn.addEventListener('click', function() {
+  customToggleBtn.style.display = 'none';
+  customInputRow.style.display = 'flex';
+  customMenuInput.focus();
+});
+
+customConfirmBtn.addEventListener('click', function() {
+  const val = customMenuInput.value.trim();
+  if (!val) {
+    customError.textContent = '뭐 먹고싶은지 적어줘 ㅋㅋ';
+    customError.style.display = 'block';
+    return;
+  }
+  if (isRefusal(val)) {
+    customError.textContent = pickRefusalReply();
+    customError.style.display = 'block';
+    return;
+  }
+  customError.style.display = 'none';
+  chosenMenu = val;
+  pickerView.style.display = 'none';
+  timeTitle.textContent = '오늘 ' + chosenMealType + ' 몇 시에 먹을까? ⏰';
+  timeSub.textContent = chosenMealType + '에 ' + chosenMenu + ' 먹을 시간 골라줘';
+  applyDefaultHour();
+  timeView.style.display = 'block';
+});
+
+const timeConfirmBtn = document.getElementById('timeConfirm');
+let chosenTime = '19:00';
+
+timeConfirmBtn.addEventListener('click', async function() {
+  chosenTime = hourSelect.value + ':' + minuteSelect.value;
+
+  timeView.style.display = 'none';
+  resultBox.style.display = 'block';
+  resultEmoji.textContent = (menuEmojis[chosenMenu] || '🍽️') + ' 🥰';
+  resultText.textContent = chosenMealType + '으로 ' + chosenMenu + ' 골랐구나!';
+  resultTime.textContent = chosenTime + '에 만나자!';
+
+  notifyNtfy(chosenMealType, chosenMenu, chosenTime);
+});
+
+
+</script>
+
+</body>
+</html>
