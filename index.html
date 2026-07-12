@@ -557,6 +557,45 @@ function pickRefusalReply() {
   return refusalReplies[Math.floor(Math.random() * refusalReplies.length)];
 }
 
+const foodPatterns = [
+  '탕', '국', '찌개', '전골', '볶음', '볶이', '구이', '조림', '튀김', '전',
+  '면', '밥', '죽', '롤', '버거', '피자', '파스타', '스테이크', '회', '초밥',
+  '라면', '우동', '쌀국수', '냉면', '만두', '핫도그', '토스트', '샐러드',
+  '족발', '보쌈', '삼겹살', '갈비', '불고기', '잡채', '비빔밥', '김밥',
+  '떡', '빵', '케이크', '디저트', '커리', '카레', '스시', '고기', '닭',
+  '치킨', '국수', '수제비', '순대', '곱창', '막창', '냉모밀', '소바',
+  '규동', '오코노미야키', '다코야키', '타코', '부리또', '케밥',
+  '장어', '연어', '새우', '조개', '굴', '탕수육', '깐풍기', '양장피',
+  '멘보샤', '꿔바로우', '딤섬', '마파두부', '멘타이', '오니기리', '벤토',
+  '라멘', '돈코츠', '규카츠', '함박', '오므라이스', '계란찜', '된장',
+  '김치', '순두부', '부대찌개', '감바스', '리조또', '뇨끼', '크림파스타',
+  '알리오올리오', '수육', '닭갈비', '백숙', '삼계탕', '추어탕', '설렁탕',
+  '곰탕', '갈비탕', '매운탕', '아구찜', '코다리', '닭발', '불닭', '떡갈비',
+  '핫바', '어묵', '김말이', '라볶이', '잔치국수', '칼국수', '쫄면',
+  '비빔면', '열무국수', '마라탕', '마라샹궈', '양꼬치', '훠궈', '쌀국수',
+  '베이글', '샌드위치', '오니기리', '유부초밥', '주먹밥', '분식',
+  '떡볶이', '쭈꾸미', '낙지', '해물', '삼각김밥', '핫플', '뷔페',
+  '한식', '중식', '일식', '양식', '아시안', '식당', '맛집'
+];
+
+function isFoodLike(rawVal) {
+  const normalized = normalize(rawVal);
+  return foodPatterns.some(function(w) {
+    return normalized.includes(normalize(w));
+  });
+}
+
+const notFoodReplies = [
+  '그거 음식 이름 맞아? 다시 적어줘 ㅋㅋ',
+  '음... 그건 못 먹을 것 같은데 ㅋㅋ 진짜 메뉴로 말해줘',
+  '그건 메뉴가 아니잖아 ㅋㅋ 뭐 먹고싶은지 적어줘',
+  '어? 그건 처음 듣는 음식인데 ㅋㅋ 다시 적어줄래'
+];
+
+function pickNotFoodReply() {
+  return notFoodReplies[Math.floor(Math.random() * notFoodReplies.length)];
+}
+
 customToggleBtn.addEventListener('click', function() {
   customToggleBtn.style.display = 'none';
   customInputRow.style.display = 'flex';
@@ -572,6 +611,11 @@ customConfirmBtn.addEventListener('click', function() {
   }
   if (isRefusal(val)) {
     customError.textContent = pickRefusalReply();
+    customError.style.display = 'block';
+    return;
+  }
+  if (!isFoodLike(val)) {
+    customError.textContent = pickNotFoodReply();
     customError.style.display = 'block';
     return;
   }
